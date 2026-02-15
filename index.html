@@ -1,12 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>moonkehh</title>
-    <h1>moonkehh</h1>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>moonkehh</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top, #1b1b3a, #050510);
+  overflow: hidden;
+  height: 100vh;
+  cursor: crosshair;
+}
+
+/* Title */
+#title {
+  position: fixed;
+  top: 20px;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 1.5rem;
+  opacity: 0.8;
+  z-index: 10;
+}
+
+/* Hint */
+#hint {
+  position: fixed;
+  bottom: 15px;
+  width: 100%;
+  text-align: center;
+  color: #aaa;
+  font-size: 0.85rem;
+  z-index: 10;
+}
+
+canvas {
+  display: block;
+}
+</style>
 </head>
+
 <body>
-    
+
+<div id="title">moonkehh</div>
+<div id="hint">Click to spawn • Move mouse to control gravity</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let w, h;
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+/* Physics */
+let gravity = { x: 0, y: 0.4 };
+const friction = 0.999;
+const bounce = 0.85;
+
+const balls = [];
+
+/* Mouse gravity */
+document.addEventListener("mousemove", e => {
+  const gx = (e.clientX - w / 2) / w;
+  const gy = (e.clientY - h / 2) / h;
+
+  gravity.x = gx * 0.8;
+  gravity.y = gy * 0.8;
+});
+
+/* Spawn ball */
+document.addEventListener("click", e => {
+  balls.push({
+    x: e.clientX,
+    y: e.clientY,
+    vx: (Math.random() - 0.5) * 6,
+    vy: (Math.random() - 0.5) * 6,
+    r: 12 + Math.random() * 10,
+    hue: Math.random() * 360
+  });
+});
+
+/* Loop */
+function update() {
+
+  ctx.clearRect(0, 0, w, h);
+
+  balls.forEach(b => {
+
+    /* Gravity */
+    b.vx += gravity.x;
+    b.vy += gravity.y;
+
+    /* Move */
+    b.x += b.vx;
+    b.y += b.vy;
+
+    /* Friction */
+    b.vx *= friction;
+    b.vy *= friction;
+
+    /* Walls */
+    if (b.x - b.r < 0) {
+      b.x = b.r;
+      b.vx *= -bounce;
+    }
+
+    if (b.x + b.r > w) {
+      b.x = w - b.r;
+      b.vx *= -bounce;
+    }
+
+    if (b.y - b.r < 0) {
+      b.y = b.r;
+      b.vy *= -bounce;
+    }
+
+    if (b.y + b.r > h) {
+      b.y = h - b.r;
+      b.vy *= -bounce;
+    }
+
+    /* Glow */
+    const grad = ctx.createRadialGradient(
+      b.x, b.y, 2,
+      b.x, b.y, b.r * 2
+    );
+
+    grad.addColorStop(0, `hsla(${b.hue},100%,70%,1)`);
+    grad.addColorStop(1, `hsla(${b.hue},100%,50%,0)`);
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Ball */
+    ctx.fillStyle = `hsl(${b.hue},100%,60%)`;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+
+  });
+
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+
 </body>
 </html>
